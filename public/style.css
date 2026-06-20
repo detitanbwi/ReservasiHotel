@@ -474,6 +474,8 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
 .room-price-info {
@@ -491,6 +493,7 @@ header {
 .room-price-val {
     font-size: 1.4rem;
     font-weight: 700;
+    white-space: nowrap;
 }
 
 .room-price-val span {
