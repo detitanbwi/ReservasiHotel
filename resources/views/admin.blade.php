@@ -11,6 +11,17 @@ use App\Helpers\Icons;
 </head>
 <body>
 
+    <!-- Mobile Admin Header -->
+    <header class="admin-mobile-header">
+        <div class="logo-wrapper">
+            {!! Icons::getLogo('#ffffff', 28) !!}
+            <span class="logo-text" style="font-size: 1rem; text-transform: uppercase; font-weight:700;">Admin Panel</span>
+        </div>
+        <button class="hamburger-toggle" onclick="toggleAdminSidebar()">
+            &#9776;
+        </button>
+    </header>
+
     <div class="admin-wrapper">
         <!-- Sidebar Navigation -->
         <aside class="admin-sidebar">
@@ -84,7 +95,7 @@ use App\Helpers\Icons;
 
             <!-- Reservations Tab (Dashboard) -->
             @if ($currentTab === 'dashboard')
-                <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 30px; align-items: start;">
+                <div class="admin-grid-layout">
                     <!-- Manual Reservation Form -->
                     <div class="admin-card">
                         <div class="admin-card-title">
@@ -182,7 +193,7 @@ use App\Helpers\Icons;
 
             <!-- Room Blockings Tab -->
             @elseif ($currentTab === 'blockings')
-                <div style="display: grid; grid-template-columns: 1fr 2.5fr; gap: 30px; align-items: start;">
+                <div class="admin-grid-layout">
                     <!-- Room Blocking Form -->
                     <div class="admin-card">
                         <div class="admin-card-title">
@@ -263,7 +274,7 @@ use App\Helpers\Icons;
 
             <!-- Room CRUD Tab -->
             @elseif ($currentTab === 'rooms')
-                <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px;">
+                <div class="admin-grid-layout split-equal">
                     <div>
                         <div class="admin-card">
                             <div class="admin-card-title">Add Room Type</div>
@@ -382,7 +393,7 @@ use App\Helpers\Icons;
 
             <!-- Dynamic Pricing Tab -->
             @elseif ($currentTab === 'pricing')
-                <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px;">
+                <div class="admin-grid-layout split-equal">
                     <div>
                         <div class="admin-card">
                             <div class="admin-card-title">Create / Update Pricing Rule</div>
@@ -638,6 +649,11 @@ use App\Helpers\Icons;
 
         function closeEditRoomModal() {
             document.getElementById('editRoomModal').classList.remove('active');
+        }
+
+        // 3. Mobile Sidebar Hamburger Toggle
+        function toggleAdminSidebar() {
+            document.querySelector('.admin-sidebar').classList.toggle('active');
         }
     </script>
 
