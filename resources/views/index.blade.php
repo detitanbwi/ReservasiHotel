@@ -389,7 +389,12 @@ use App\Helpers\Icons;
 
 Mohon info ketersediaan slot dan rekening pembayarannya. Terima kasih!`;
 
-            const waLink = `https://api.whatsapp.com/send?phone=${adminPhone}&text=${encodeURIComponent(message)}`;
+            let destinationPhone = phone.replace(/\D/g, '');
+            if (destinationPhone.startsWith('0')) {
+                destinationPhone = '62' + destinationPhone.substring(1);
+            }
+
+            const waLink = `https://api.whatsapp.com/send?phone=${destinationPhone}&text=${encodeURIComponent(message)}`;
             
             window.open(waLink, '_blank');
             closeBookingModal();
