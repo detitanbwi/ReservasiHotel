@@ -934,10 +934,38 @@ footer {
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
         padding: 20px;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
     }
 
     .admin-sidebar-logo {
-        margin-bottom: 20px;
+        margin-bottom: 0;
+    }
+
+    .admin-menu {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .admin-menu-item {
+        flex: 1 1 auto;
+        min-width: 140px;
+        text-align: center;
+    }
+
+    .admin-menu-item a {
+        padding: 10px;
+        font-size: 0.85rem;
+        justify-content: center;
+    }
+
+    .admin-menu-item[style*="margin-top"] {
+        margin-top: 0 !important;
     }
 
     .admin-content {
