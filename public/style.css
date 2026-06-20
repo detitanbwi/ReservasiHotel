@@ -914,10 +914,11 @@ footer {
     }
 }
 
-/* Responsive grid changes */
-@media (max-width: 900px) {
+/* Responsive grid changes and Mobile optimization */
+@media (max-width: 992px) {
     .profile-grid {
         grid-template-columns: 1fr;
+        gap: 30px;
     }
     
     .footer-container {
@@ -932,5 +933,112 @@ footer {
     .admin-sidebar {
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 20px;
+    }
+
+    .admin-sidebar-logo {
+        margin-bottom: 20px;
+    }
+
+    .admin-content {
+        padding: 20px;
+    }
+
+    /* Stack admin split columns */
+    .admin-content > div[style*="display: grid"] {
+        grid-template-columns: 1fr !important;
+        gap: 30px !important;
     }
 }
+
+@media (max-width: 768px) {
+    .nav-container {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+
+    .nav-links {
+        gap: 15px;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    header {
+        position: relative;
+        background: var(--color-text-dark);
+    }
+
+    .hero {
+        height: 60vh;
+    }
+
+    .hero-title {
+        font-size: 2.2rem;
+    }
+
+    .hero-subtitle {
+        font-size: 0.9rem;
+    }
+
+    .search-widget-container {
+        margin-top: -30px;
+    }
+
+    .search-widget {
+        padding: 20px;
+    }
+
+    .search-form {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .search-form button {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+    .section {
+        padding: 50px 20px;
+    }
+
+    .section-title {
+        font-size: 2rem;
+    }
+
+    .profile-grid {
+        gap: 30px;
+    }
+
+    .profile-images {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-img-item {
+        grid-column: span 1 !important;
+        height: 200px;
+    }
+
+    .catalog-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+
+    .room-card-content {
+        padding: 20px;
+    }
+
+    .room-name {
+        font-size: 1.3rem;
+    }
+
+    .modal-content {
+        padding: 25px 20px;
+    }
+
+    .modal-title {
+        font-size: 1.5rem;
+    }
+}
+
