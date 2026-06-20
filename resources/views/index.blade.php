@@ -7,7 +7,7 @@ use App\Helpers\Icons;
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $settings['hotel_name'] ?? 'The Bronze Oasis Resort' }} - Direct Booking</title>
-    <link rel="stylesheet" href="{{ asset('style.css') }}">
+    <link rel="stylesheet" href="{{ asset('style.css') }}?v={{ time() }}">
 </head>
 <body>
 
