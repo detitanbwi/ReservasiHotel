@@ -35,7 +35,8 @@ class HotelSeeder extends Seeder
                 'description' => 'A spacious suite featuring high-end furnishings, a king-size bed, private balcony, and state-of-the-art bathroom.',
                 'capacity' => 2,
                 'base_price' => 750000,
-                'amenities' => 'King Bed, Balcony, Mini Bar, Free Wi-Fi, Coffee Maker, Bathtub'
+                'amenities' => 'King Bed, Balcony, Mini Bar, Free Wi-Fi, Coffee Maker, Bathtub',
+                'images' => 'https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=800&q=80,https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=800&q=80,https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80'
             ],
             [
                 'id' => 2,
@@ -43,7 +44,8 @@ class HotelSeeder extends Seeder
                 'description' => 'Designed for maximum comfort and business stays, includes a separated living area, desk, and gorgeous sunset view.',
                 'capacity' => 2,
                 'base_price' => 1200000,
-                'amenities' => 'King Bed, Separate Living Area, High-speed Wi-Fi, Bathtub, Smart TV, Premium Coffee'
+                'amenities' => 'King Bed, Separate Living Area, High-speed Wi-Fi, Bathtub, Smart TV, Premium Coffee',
+                'images' => 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=800&q=80,https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=800&q=80,https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=800&q=80'
             ],
             [
                 'id' => 3,
@@ -51,7 +53,8 @@ class HotelSeeder extends Seeder
                 'description' => 'The ultimate luxury experience. Full kitchen, private plunge pool, 360 panoramic views, and premium personalized service.',
                 'capacity' => 4,
                 'base_price' => 3500000,
-                'amenities' => '2 King Beds, Private Pool, Full Kitchen, Panoramic View, 24/7 Butler, Wine Cellar'
+                'amenities' => '2 King Beds, Private Pool, Full Kitchen, Panoramic View, 24/7 Butler, Wine Cellar',
+                'images' => 'https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=800&q=80,https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80,https://images.unsplash.com/photo-1505691938895-1758d7feb511?auto=format&fit=crop&w=800&q=80'
             ]
         ];
 

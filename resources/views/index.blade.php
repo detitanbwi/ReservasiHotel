@@ -8,6 +8,8 @@ use App\Helpers\Icons;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $settings['hotel_name'] ?? 'The Bronze Oasis Resort' }} - Direct Booking</title>
     <link rel="stylesheet" href="{{ asset('style.css') }}?v={{ time() }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('calendar.js') }}?v={{ time() }}"></script>
 </head>
 <body>
 
@@ -40,17 +42,14 @@ use App\Helpers\Icons;
     <div class="search-widget-container">
         <div class="search-widget">
             <form action="{{ route('index') }}#rooms" method="GET" class="search-form" id="searchForm">
+                <input type="hidden" name="check_in" id="check_in_hidden" value="{{ $checkIn }}">
+                <input type="hidden" name="check_out" id="check_out_hidden" value="{{ $checkOut }}">
+                
                 <div class="form-group">
                     <label>
-                        {!! Icons::getCalendar('#241d01', 14) !!} Check-In
+                        {!! Icons::getCalendar('#241d01', 14) !!} Stay Dates
                     </label>
-                    <input type="date" name="check_in" id="check_in" class="form-control" required value="{{ $checkIn }}">
-                </div>
-                <div class="form-group">
-                    <label>
-                        {!! Icons::getCalendar('#241d01', 14) !!} Check-Out
-                    </label>
-                    <input type="date" name="check_out" id="check_out" class="form-control" required value="{{ $checkOut }}">
+                    <div id="guestDateRangePicker"></div>
                 </div>
                 <div class="form-group">
                     <label>
@@ -132,10 +131,27 @@ use App\Helpers\Icons;
                     </div>
                 @else
                     @foreach ($catalog as $item)
+                        @php
+                            $images = !empty($item['room_type']['images']) ? explode(',', $item['room_type']['images']) : [];
+                        @endphp
                         <div class="room-card">
-                            <div class="room-img-placeholder">
-                                {!! Icons::getBed('#ffffff', 50) !!}
-                            </div>
+                            @if (count($images) > 0)
+                                <div class="room-gallery-slider" id="slider-searched-{{ $item['room_type']['id'] }}">
+                                    <div class="slides-container">
+                                        @foreach ($images as $index => $imgUrl)
+                                            <img src="{{ trim($imgUrl) }}" class="slide-img {{ $index === 0 ? 'active' : '' }}" alt="{{ $item['room_type']['name'] }}">
+                                        @endforeach
+                                    </div>
+                                    @if (count($images) > 1)
+                                        <button class="slide-arrow prev-arrow" onclick="changeSlide('slider-searched-{{ $item['room_type']['id'] }}', -1)">&lt;</button>
+                                        <button class="slide-arrow next-arrow" onclick="changeSlide('slider-searched-{{ $item['room_type']['id'] }}', 1)">&gt;</button>
+                                    @endif
+                                </div>
+                            @else
+                                <div class="room-img-placeholder">
+                                    {!! Icons::getBed('#ffffff', 50) !!}
+                                </div>
+                            @endif
                             <div class="room-card-content">
                                 <h3 class="room-name">{{ $item['room_type']['name'] }}</h3>
                                 <p class="room-desc">{{ $item['room_type']['description'] }}</p>
@@ -159,8 +175,8 @@ use App\Helpers\Icons;
                                             Book Now
                                         </button>
                                     @else
-                                        <button class="btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">
-                                            Fully Booked
+                                        <button class="btn-secondary" disabled style="opacity: 0.9; cursor: not-allowed; background-color: #ffebee; color: #c62828; border: 1px solid #ef9a9a; font-weight:700;">
+                                            Kamar penuh
                                         </button>
                                     @endif
                                 </div>
@@ -170,10 +186,27 @@ use App\Helpers\Icons;
                 @endif
             @else
                 @foreach ($catalog as $item)
+                    @php
+                        $images = !empty($item['room_type']['images']) ? explode(',', $item['room_type']['images']) : [];
+                    @endphp
                     <div class="room-card">
-                        <div class="room-img-placeholder">
-                            {!! Icons::getBed('#ffffff', 50) !!}
-                        </div>
+                        @if (count($images) > 0)
+                            <div class="room-gallery-slider" id="slider-static-{{ $item['room_type']['id'] }}">
+                                <div class="slides-container">
+                                    @foreach ($images as $index => $imgUrl)
+                                        <img src="{{ trim($imgUrl) }}" class="slide-img {{ $index === 0 ? 'active' : '' }}" alt="{{ $item['room_type']['name'] }}">
+                                    @endforeach
+                                </div>
+                                @if (count($images) > 1)
+                                    <button class="slide-arrow prev-arrow" onclick="changeSlide('slider-static-{{ $item['room_type']['id'] }}', -1)">&lt;</button>
+                                    <button class="slide-arrow next-arrow" onclick="changeSlide('slider-static-{{ $item['room_type']['id'] }}', 1)">&gt;</button>
+                                @endif
+                            </div>
+                        @else
+                            <div class="room-img-placeholder">
+                                {!! Icons::getBed('#ffffff', 50) !!}
+                            </div>
+                        @endif
                         <div class="room-card-content">
                             <h3 class="room-name">{{ $item['room_type']['name'] }}</h3>
                             <p class="room-desc">{{ $item['room_type']['description'] }}</p>
@@ -297,44 +330,15 @@ use App\Helpers\Icons;
     <!-- Scripting for date limiters, modal triggers, and WhatsApp API redirect -->
     <script>
         const xDaysLimit = {{ $settings['x_days_limit'] ?? 30 }};
-        const today = new Date();
-        const tomorrow = new Date();
-        tomorrow.setDate(today.getDate() + 1);
-
-        const formatDate = (date) => {
-            let d = new Date(date),
-                month = '' + (d.getMonth() + 1),
-                day = '' + d.getDate(),
-                year = d.getFullYear();
-
-            if (month.length < 2) month = '0' + month;
-            if (day.length < 2) day = '0' + day;
-
-            return [year, month, day].join('-');
-        };
-
-        const maxDate = new Date();
-        maxDate.setDate(today.getDate() + xDaysLimit);
-
-        const checkInInput = document.getElementById('check_in');
-        const checkOutInput = document.getElementById('check_out');
-
-        checkInInput.min = formatDate(today);
-        checkInInput.max = formatDate(maxDate);
-
-        checkInInput.addEventListener('change', () => {
-            const selectedCI = new Date(checkInInput.value);
-            const minCO = new Date(selectedCI);
-            minCO.setDate(selectedCI.getDate() + 1);
-            
-            checkOutInput.min = formatDate(minCO);
-            
-            const maxCO = new Date(selectedCI);
-            maxCO.setDate(selectedCI.getDate() + xDaysLimit);
-            checkOutInput.max = formatDate(maxCO);
-            
-            if (checkOutInput.value && new Date(checkOutInput.value) <= selectedCI) {
-                checkOutInput.value = formatDate(minCO);
+        
+        // Instantiate Custom Date Range Picker for Guest Search Form
+        const guestPicker = new CustomDateRangePicker('guestDateRangePicker', {
+            xDaysLimit: xDaysLimit,
+            defaultCheckIn: '{{ $checkIn }}',
+            defaultCheckOut: '{{ $checkOut }}',
+            onSelect: (start, end) => {
+                document.getElementById('check_in_hidden').value = start;
+                document.getElementById('check_out_hidden').value = end;
             }
         });
 
@@ -389,7 +393,7 @@ use App\Helpers\Icons;
 
 Mohon info ketersediaan slot dan rekening pembayarannya. Terima kasih!`;
 
-            let destinationPhone = phone.replace(/\D/g, '');
+            let destinationPhone = adminPhone.replace(/\D/g, '');
             if (destinationPhone.startsWith('0')) {
                 destinationPhone = '62' + destinationPhone.substring(1);
             }
@@ -398,6 +402,26 @@ Mohon info ketersediaan slot dan rekening pembayarannya. Terima kasih!`;
             
             window.open(waLink, '_blank');
             closeBookingModal();
+        }
+
+        // Slider Javascript helper
+        function changeSlide(sliderId, dir) {
+            const slider = document.getElementById(sliderId);
+            if (!slider) return;
+            const images = slider.querySelectorAll('.slide-img');
+            if (images.length <= 1) return;
+            let activeIndex = -1;
+            for (let i = 0; i < images.length; i++) {
+                if (images[i].classList.contains('active')) {
+                    activeIndex = i;
+                    images[i].classList.remove('active');
+                    break;
+                }
+            }
+            let nextIndex = activeIndex + dir;
+            if (nextIndex >= images.length) nextIndex = 0;
+            if (nextIndex < 0) nextIndex = images.length - 1;
+            images[nextIndex].classList.add('active');
         }
     </script>
 </body>

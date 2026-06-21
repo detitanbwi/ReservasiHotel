@@ -24,6 +24,7 @@ return new class extends Migration
             $table->integer('capacity');
             $table->decimal('base_price', 15, 2);
             $table->text('amenities')->nullable();
+            $table->text('images')->nullable();
             $table->timestamps();
         });
 
@@ -55,6 +56,8 @@ return new class extends Migration
             $table->decimal('total_price', 15, 2)->default(0);
             $table->text('notes')->nullable();
             $table->string('booking_type')->default('reservation'); // 'reservation', 'blocking'
+            $table->string('status')->default('checked_in'); // 'checked_in', 'checked_out'
+            $table->date('actual_checkout')->nullable();
             $table->timestamps();
         });
     }

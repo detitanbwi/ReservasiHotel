@@ -8,6 +8,8 @@ use App\Helpers\Icons;
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - {{ $settings['hotel_name'] ?? 'Hotel Resort' }}</title>
     <link rel="stylesheet" href="{{ asset('style.css') }}?v={{ time() }}">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('calendar.js') }}?v={{ time() }}"></script>
 </head>
 <body>
 
@@ -67,35 +69,60 @@ use App\Helpers\Icons;
         <main class="admin-content">
             <!-- Header -->
             <div class="admin-header">
-                <div>
-                    <h1 style="font-size: 2rem; color: var(--color-text-dark);">
-                        @switch($currentTab)
-                            @case('rooms') Room & Type Management @break
-                            @case('pricing') Dynamic Pricing Rules @break
-                            @case('blockings') Maintenance Room Blockings @break
-                            @case('settings') Global Configurations @break
-                            @default Guest Reservations Overview
-                        @endswitch
-                    </h1>
-                    <div class="admin-title-desc">Manage your property, custom pricing rules, and reservation blockings.</div>
+                <div style="display: flex; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap;">
+                    <button type="button" class="sidebar-toggle-desktop-btn" onclick="toggleSidebarDesktop()" style="font-size: 1.4rem; padding: 6px 12px; border: 1px solid var(--color-bronze-light); background: var(--color-bg-alt); border-radius: 6px; cursor: pointer; color: var(--color-text-dark); display: flex; align-items: center; justify-content: center; transition: var(--transition-smooth);">
+                        &#9776;
+                    </button>
+                    
+                    <div class="admin-header-logo" style="display: flex; align-items: center; gap: 10px; margin-right: 15px; border-right: 1px solid var(--color-bronze-light); padding-right: 15px; height: 36px;">
+                        {!! Icons::getLogo('#241d01', 28) !!}
+                        <span class="logo-text" style="color: var(--color-text-dark); font-size: 1.1rem; font-weight: 700; text-transform: uppercase;">{{ $settings['hotel_name'] ?? 'Hotel Resort' }}</span>
+                    </div>
+
+                    <div style="flex-grow: 1; min-width: 200px;">
+                        <h1 style="font-size: 1.6rem; color: var(--color-text-dark); margin: 0; line-height: 1.2;">
+                            @switch($currentTab)
+                                @case('rooms') Room & Type Management @break
+                                @case('pricing') Dynamic Pricing Rules @break
+                                @case('blockings') Maintenance Room Blockings @break
+                                @case('settings') Global Configurations @break
+                                @default Guest Reservations Overview
+                            @endswitch
+                        </h1>
+                        <div class="admin-title-desc" style="margin-top: 2px;">Manage your property, custom pricing rules, and reservation blockings.</div>
+                    </div>
                 </div>
             </div>
 
             <!-- Status Alerts -->
             @if(session('message'))
-                <div class="alert alert-success">
-                    {{ session('message') }}
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: @json(session('message')),
+                            confirmButtonColor: '#b19453'
+                        });
+                    });
+                </script>
             @endif
             @if(session('error'))
-                <div class="alert alert-danger">
-                    {{ session('error') }}
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: @json(session('error')),
+                            confirmButtonColor: '#b19453'
+                        });
+                    });
+                </script>
             @endif
 
             <!-- Reservations Tab (Dashboard) -->
             @if ($currentTab === 'dashboard')
-                <div class="admin-grid-layout">
+                <div class="admin-stacked-layout">
                     <!-- Manual Reservation Form -->
                     <div class="admin-card">
                         <div class="admin-card-title">
@@ -105,29 +132,32 @@ use App\Helpers\Icons;
                             @csrf
                             <input type="hidden" name="booking_type" value="reservation">
                             
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Guest Name</label>
-                                <input type="text" name="guest_name" class="form-control" placeholder="e.g. John Doe" required>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Guest WhatsApp</label>
-                                <input type="text" name="guest_phone" class="form-control" placeholder="e.g. 62812345678" required>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Select Assigned Room</label>
-                                <select name="room_id" class="form-control" required>
-                                    @foreach ($rooms as $r)
-                                        <option value="{{ $r->id }}">{{ $r->room_number }} ({{ $r->room_type_name }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Check-In Date</label>
-                                <input type="date" name="check_in" class="form-control" required>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Check-Out Date</label>
-                                <input type="date" name="check_out" class="form-control" required>
+                            <input type="hidden" name="check_in" id="res_check_in" required>
+                            <input type="hidden" name="check_out" id="res_check_out" required>
+                            
+                            <div class="admin-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 15px;">
+                                <div class="form-group">
+                                    <label>Guest Name</label>
+                                    <input type="text" name="guest_name" class="form-control" placeholder="e.g. John Doe" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Guest WhatsApp</label>
+                                    <input type="text" name="guest_phone" class="form-control" placeholder="e.g. 62812345678" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Stay Dates</label>
+                                    <div id="resDateRangePicker"></div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Assigned Room</label>
+                                    <input type="hidden" name="room_id" id="selected_room_id" required>
+                                    <div style="display: flex; gap: 8px;">
+                                        <input type="text" id="selected_room_display" class="form-control" placeholder="Select dates first, then choose a room..." readonly required style="flex-grow: 1;">
+                                        <button type="button" class="btn-primary" onclick="openRoomSelectionModal()" style="white-space: nowrap; padding: 10px 16px;">
+                                            Select Room
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label>Notes</label>
@@ -142,6 +172,15 @@ use App\Helpers\Icons;
                         <div class="admin-card-title">
                             {!! Icons::getShieldCheck('#b19453', 20) !!} Registered Guest Bookings
                         </div>
+                        <div class="booking-filter-bar">
+                            <span class="booking-filter-title">Filter list by stay dates:</span>
+                            <div class="filter-picker-wrapper">
+                                <div id="bookingListFilterPicker"></div>
+                            </div>
+                            <button type="button" class="btn-clear-filter" onclick="clearBookingFilter()">
+                                Clear Filter
+                            </button>
+                        </div>
                         <div class="admin-table-wrapper">
                             <table class="admin-table">
                                 <thead>
@@ -152,17 +191,18 @@ use App\Helpers\Icons;
                                         <th>WA Phone</th>
                                         <th>Date Range</th>
                                         <th>Total Price</th>
+                                        <th>Status</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @if ($reservations->isEmpty())
                                         <tr>
-                                            <td colspan="7" style="text-align: center; color: var(--color-text-muted);">No active reservations registered.</td>
+                                            <td colspan="8" style="text-align: center; color: var(--color-text-muted);">No active reservations registered.</td>
                                         </tr>
                                     @else
                                         @foreach ($reservations as $b)
-                                            <tr>
+                                            <tr class="booking-row" data-check-in="{{ $b->check_in }}" data-check-out="{{ $b->status === 'checked_out' ? $b->actual_checkout : $b->check_out }}">
                                                 <td><strong>{{ $b->room_number }}</strong></td>
                                                 <td><span style="font-size: 0.85rem; color: var(--color-text-muted);">{{ $b->room_type_name }}</span></td>
                                                 <td><strong>{{ $b->guest_name }}</strong></td>
@@ -170,13 +210,31 @@ use App\Helpers\Icons;
                                                 <td><span style="font-size:0.85rem;">{{ date('d/m/y', strtotime($b->check_in)) }} - {{ date('d/m/y', strtotime($b->check_out)) }}</span></td>
                                                 <td><strong>Rp {{ number_format($b->total_price, 0, ',', '.') }}</strong></td>
                                                 <td>
-                                                    <div style="display:flex; gap: 8px;">
-                                                        <button class="action-btn action-btn-primary" onclick="openEditRoomModal({{ $b->id }}, '{{ $b->guest_name }}')">
-                                                            Move Room
-                                                        </button>
-                                                        <form action="{{ route('admin.booking.delete', $b->id) }}" method="POST" onsubmit="return confirm('Cancel this guest booking?');">
+                                                    @if ($b->status === 'checked_in')
+                                                        <span class="badge" style="background-color: #2e7d32; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Checked In</span>
+                                                    @else
+                                                        <span class="badge" style="background-color: #757575; color: #ffffff; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 600;">Checked Out</span>
+                                                        @if ($b->actual_checkout)
+                                                            <div style="font-size: 0.7rem; color: var(--color-text-muted); margin-top: 2px;">Out: {{ date('d/m/y', strtotime($b->actual_checkout)) }}</div>
+                                                        @endif
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+                                                        @if ($b->status === 'checked_in')
+                                                            <button class="action-btn action-btn-primary" onclick="openEditRoomModal({{ $b->id }}, '{{ $b->guest_name }}')">
+                                                                Move Room
+                                                            </button>
+                                                            <form id="checkout-form-{{ $b->id }}" action="{{ route('admin.booking.checkout', $b->id) }}" method="POST" style="display:inline;">
+                                                                @csrf
+                                                                <button type="button" class="action-btn action-btn-success" style="background-color: #2e7d32;" onclick="confirmCheckout({{ $b->id }}, '{{ $b->guest_name }}')">
+                                                                    Check Out
+                                                                </button>
+                                                            </form>
+                                                        @endif
+                                                        <form id="delete-form-{{ $b->id }}" action="{{ route('admin.booking.delete', $b->id) }}" method="POST" style="display:inline;">
                                                             @csrf
-                                                            <button type="submit" class="action-btn action-btn-danger">
+                                                            <button type="button" class="action-btn action-btn-danger" onclick="confirmCancel({{ $b->id }}, '{{ $b->guest_name }}')">
                                                                 Cancel
                                                             </button>
                                                         </form>
@@ -193,7 +251,7 @@ use App\Helpers\Icons;
 
             <!-- Room Blockings Tab -->
             @elseif ($currentTab === 'blockings')
-                <div class="admin-grid-layout">
+                <div class="admin-stacked-layout">
                     <!-- Room Blocking Form -->
                     <div class="admin-card">
                         <div class="admin-card-title">
@@ -203,21 +261,22 @@ use App\Helpers\Icons;
                             @csrf
                             <input type="hidden" name="booking_type" value="blocking">
                             
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Select Room to Block</label>
-                                <select name="room_id" class="form-control" required>
-                                    @foreach ($rooms as $r)
-                                        <option value="{{ $r->id }}">{{ $r->room_number }} ({{ $r->room_type_name }})</option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>Start Date</label>
-                                <input type="date" name="check_in" class="form-control" required>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 15px;">
-                                <label>End Date</label>
-                                <input type="date" name="check_out" class="form-control" required>
+                            <input type="hidden" name="check_in" id="block_check_in" required>
+                            <input type="hidden" name="check_out" id="block_check_out" required>
+
+                            <div class="admin-form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 15px;">
+                                <div class="form-group">
+                                    <label>Select Room to Block</label>
+                                    <select name="room_id" class="form-control" required>
+                                        @foreach ($rooms as $r)
+                                            <option value="{{ $r->id }}">{{ $r->room_number }} ({{ $r->room_type_name }})</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Block Dates</label>
+                                    <div id="blockDateRangePicker"></div>
+                                </div>
                             </div>
                             <div class="form-group" style="margin-bottom: 20px;">
                                 <label>Reason / Notes</label>
@@ -256,9 +315,9 @@ use App\Helpers\Icons;
                                                 <td><strong>{{ date('d M Y', strtotime($b->check_in)) }} to {{ date('d M Y', strtotime($b->check_out)) }}</strong></td>
                                                 <td><span style="font-size:0.9rem; color: var(--color-text-muted);">{{ $b->notes }}</span></td>
                                                 <td>
-                                                    <form action="{{ route('admin.booking.delete', $b->id) }}" method="POST" onsubmit="return confirm('Remove block on this room?');">
+                                                    <form id="unblock-form-{{ $b->id }}" action="{{ route('admin.booking.delete', $b->id) }}" method="POST" style="display:inline;">
                                                         @csrf
-                                                        <button type="submit" class="action-btn action-btn-danger">
+                                                        <button type="button" class="action-btn action-btn-danger" onclick="confirmUnblock({{ $b->id }}, '{{ $b->room_number }}')">
                                                             Unblock
                                                         </button>
                                                     </form>
@@ -298,6 +357,10 @@ use App\Helpers\Icons;
                                 <div class="form-group" style="margin-bottom: 15px;">
                                     <label>Amenities (Comma separated)</label>
                                     <input type="text" name="amenities" class="form-control" placeholder="Wi-Fi, AC, Balcony" required>
+                                </div>
+                                <div class="form-group" style="margin-bottom: 15px;">
+                                    <label>Room Images (Comma-separated URLs)</label>
+                                    <textarea name="images" class="form-control" rows="2" placeholder="https://example.com/img1.jpg, https://example.com/img2.jpg"></textarea>
                                 </div>
                                 <div class="form-group" style="margin-bottom: 20px;">
                                     <label>Description</label>
@@ -348,9 +411,9 @@ use App\Helpers\Icons;
                                                 <td>{{ $t->capacity }} Pax</td>
                                                 <td>Rp {{ number_format($t->base_price, 0, ',', '.') }}</td>
                                                 <td>
-                                                    <form action="{{ route('admin.room-type.delete', $t->id) }}" method="POST" onsubmit="return confirm('Deleting room type will delete all associated physical rooms. Continue?');">
+                                                    <form id="delete-roomtype-form-{{ $t->id }}" action="{{ route('admin.room-type.delete', $t->id) }}" method="POST" style="display:inline;">
                                                         @csrf
-                                                        <button type="submit" style="color: #dc3545; background: none; border:none; cursor:pointer; font-weight:600;">Delete</button>
+                                                        <button type="button" style="color: #dc3545; background: none; border:none; cursor:pointer; font-weight:600;" onclick="confirmDeleteRoomType({{ $t->id }}, '{{ $t->name }}')">Delete</button>
                                                     </form>
                                                 </td>
                                             </tr>
@@ -377,9 +440,9 @@ use App\Helpers\Icons;
                                                 <td><strong>{{ $r->room_number }}</strong></td>
                                                 <td>{{ $r->room_type_name }}</td>
                                                 <td>
-                                                    <form action="{{ route('admin.room.delete', $r->id) }}" method="POST" onsubmit="return confirm('Delete physical room?');">
+                                                    <form id="delete-room-form-{{ $r->id }}" action="{{ route('admin.room.delete', $r->id) }}" method="POST" style="display:inline;">
                                                         @csrf
-                                                        <button type="submit" style="color: #dc3545; background: none; border:none; cursor:pointer; font-weight:600;">Delete</button>
+                                                        <button type="button" style="color: #dc3545; background: none; border:none; cursor:pointer; font-weight:600;" onclick="confirmDeleteRoom({{ $r->id }}, '{{ $r->room_number }}')">Delete</button>
                                                     </form>
                                                 </td>
                                             </tr>
@@ -487,9 +550,9 @@ use App\Helpers\Icons;
                                                         @endif
                                                     </td>
                                                     <td>
-                                                        <form action="{{ route('admin.pricing.delete', $rule->id) }}" method="POST" onsubmit="return confirm('Remove this rule?');">
+                                                        <form id="delete-pricing-form-{{ $rule->id }}" action="{{ route('admin.pricing.delete', $rule->id) }}" method="POST" style="display:inline;">
                                                             @csrf
-                                                            <button type="submit" style="color: #dc3545; background: none; border:none; cursor:pointer; font-weight:600;">Delete</button>
+                                                            <button type="button" style="color: #dc3545; background: none; border:none; cursor:pointer; font-weight:600;" onclick="confirmDeletePricing({{ $rule->id }})">Delete</button>
                                                         </form>
                                                     </td>
                                                 </tr>
@@ -590,6 +653,19 @@ use App\Helpers\Icons;
         </div>
     </div>
 
+    <!-- Room Selection Grid Modal -->
+    <div class="modal-overlay" id="roomSelectionModal">
+        <div class="modal-content" style="max-width: 750px;">
+            <button class="modal-close" onclick="closeRoomSelectionModal()">&times;</button>
+            <h3 class="modal-title">Select Assigned Room</h3>
+            <p class="modal-desc" style="margin-bottom: 15px;">Choose a room from the grid below. Green rooms are available.</p>
+            
+            <div id="gridContainer" class="room-selection-grid">
+                <!-- Loaded dynamically via JS Fetch -->
+            </div>
+        </div>
+    </div>
+
     <!-- Real-time currency input formatting and edit room Ajax trigger script -->
     <script>
         // 1. Currency Formatting Typing Helper
@@ -654,6 +730,284 @@ use App\Helpers\Icons;
         // 3. Mobile Sidebar Hamburger Toggle
         function toggleAdminSidebar() {
             document.querySelector('.admin-sidebar').classList.toggle('active');
+        }
+
+        // 4. SweetAlert Confirmation Helpers
+        function confirmCheckout(bookingId, guestName) {
+            Swal.fire({
+                title: 'Check Out Guest?',
+                text: `Are you sure you want to check out ${guestName}? This will make the room immediately available starting from today.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#2e7d32',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Yes, Check Out'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`checkout-form-${bookingId}`).submit();
+                }
+            });
+        }
+
+        function confirmCancel(bookingId, guestName) {
+            Swal.fire({
+                title: 'Cancel Booking?',
+                text: `Are you sure you want to cancel the booking for ${guestName}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Yes, Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-form-${bookingId}`).submit();
+                }
+            });
+        }
+
+        function confirmUnblock(bookingId, roomNumber) {
+            Swal.fire({
+                title: 'Remove Block?',
+                text: `Are you sure you want to remove the maintenance/offline block on ${roomNumber}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Yes, Unblock'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`unblock-form-${bookingId}`).submit();
+                }
+            });
+        }
+
+        function confirmDeleteRoomType(roomTypeId, name) {
+            Swal.fire({
+                title: 'Delete Room Type?',
+                text: `Deleting "${name}" will permanently delete all associated physical rooms and bookings. Are you sure?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Yes, Delete'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-roomtype-form-${roomTypeId}`).submit();
+                }
+            });
+        }
+
+        function confirmDeleteRoom(roomId, roomNumber) {
+            Swal.fire({
+                title: 'Delete Physical Room?',
+                text: `Are you sure you want to delete ${roomNumber}?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Yes, Delete'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-room-form-${roomId}`).submit();
+                }
+            });
+        }
+
+        function confirmDeletePricing(ruleId) {
+            Swal.fire({
+                title: 'Remove Pricing Rule?',
+                text: 'Are you sure you want to remove this pricing rule?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#757575',
+                confirmButtonText: 'Yes, Remove'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(`delete-pricing-form-${ruleId}`).submit();
+                }
+            });
+        }
+
+        // 5. Date Picker Instantiation
+        const xDaysLimit = {{ $settings['x_days_limit'] ?? 30 }};
+        
+        let resPicker = null;
+        let blockPicker = null;
+
+        // Instantiate picker for Reservations
+        const resPickerEl = document.getElementById('resDateRangePicker');
+        if (resPickerEl) {
+            resPicker = new CustomDateRangePicker('resDateRangePicker', {
+                xDaysLimit: xDaysLimit,
+                onSelect: (start, end) => {
+                    document.getElementById('res_check_in').value = start;
+                    document.getElementById('res_check_out').value = end;
+                    // Reset room selection if dates change
+                    document.getElementById('selected_room_id').value = '';
+                    document.getElementById('selected_room_display').value = '';
+                    document.getElementById('selected_room_display').placeholder = 'Select Room now';
+                }
+            });
+        }
+
+        // Instantiate picker for Blockings
+        const blockPickerEl = document.getElementById('blockDateRangePicker');
+        if (blockPickerEl) {
+            blockPicker = new CustomDateRangePicker('blockDateRangePicker', {
+                xDaysLimit: xDaysLimit,
+                onSelect: (start, end) => {
+                    document.getElementById('block_check_in').value = start;
+                    document.getElementById('block_check_out').value = end;
+                }
+            });
+        }
+
+        // 6. Visual Room Selection Grid Modal functions
+        function openRoomSelectionModal() {
+            const checkIn = document.getElementById('res_check_in').value;
+            const checkOut = document.getElementById('res_check_out').value;
+
+            if (!checkIn || !checkOut) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Select Dates First',
+                    text: 'Please choose Check-In and Check-Out dates before selecting a room.',
+                    confirmButtonColor: '#b19453'
+                });
+                return;
+            }
+
+            const gridContainer = document.getElementById('gridContainer');
+            gridContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;">Loading room availability...</div>';
+
+            document.getElementById('roomSelectionModal').classList.add('active');
+
+            // Fetch availability grid data
+            fetch(`{{ route('admin.rooms.availability-grid') }}?check_in=${checkIn}&check_out=${checkOut}`)
+                .then(res => res.json())
+                .then(data => {
+                    gridContainer.innerHTML = '';
+                    if (data.length === 0) {
+                        gridContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px;">No physical rooms registered.</div>';
+                        return;
+                    }
+
+                    data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = `grid-room-card ${item.status}`;
+                        
+                        let cardContent = `
+                            <div>
+                                <div class="room-number-title">${item.room.room_number}</div>
+                                <div class="room-type-lbl">${item.room.room_type_name}</div>
+                            </div>
+                        `;
+
+                        if (item.status === 'available') {
+                            cardContent += `<div class="room-status-lbl available">Available</div>`;
+                            card.onclick = () => selectRoomFromGrid(item.room.id, item.room.room_number, item.room.room_type_name);
+                        } else if (item.status === 'booked') {
+                            const dateRangeStr = `${formatDisplayDate(item.check_in)} - ${formatDisplayDate(item.check_out)}`;
+                            cardContent += `
+                                <div>
+                                    <div class="room-status-lbl booked">Booked</div>
+                                    <div class="room-detail-info" style="font-size:0.65rem;">${dateRangeStr}</div>
+                                </div>
+                            `;
+                        } else if (item.status === 'blocked') {
+                            const dateRangeStr = `${formatDisplayDate(item.check_in)} - ${formatDisplayDate(item.check_out)}`;
+                            cardContent += `
+                                <div>
+                                    <div class="room-status-lbl blocked">Blocked</div>
+                                    <div class="room-detail-info">Reason: <em>${item.notes}</em></div>
+                                    <div class="room-detail-info" style="font-size:0.65rem;">${dateRangeStr}</div>
+                                </div>
+                            `;
+                        }
+
+                        card.innerHTML = cardContent;
+                        gridContainer.appendChild(card);
+                    });
+                })
+                .catch(err => {
+                    gridContainer.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:20px; color:#c62828;">Failed to load room availability.</div>';
+                    console.error(err);
+                });
+        }
+
+        function formatDisplayDate(dateStr) {
+            if (!dateStr) return '';
+            const parts = dateStr.split('-');
+            if (parts.length !== 3) return dateStr;
+            return `${parts[2]}/${parts[1]}/${parts[0].substring(2)}`;
+        }
+
+        function selectRoomFromGrid(roomId, roomNumber, roomTypeName) {
+            document.getElementById('selected_room_id').value = roomId;
+            document.getElementById('selected_room_display').value = `${roomNumber} (${roomTypeName})`;
+            closeRoomSelectionModal();
+        }
+
+        function closeRoomSelectionModal() {
+            document.getElementById('roomSelectionModal').classList.remove('active');
+        }
+
+        // 7. Desktop Sidebar Toggle
+        function toggleSidebarDesktop() {
+            document.querySelector('.admin-wrapper').classList.toggle('sidebar-collapsed');
+        }
+
+        // Mobile Sidebar Toggle
+        function toggleAdminSidebar() {
+            document.querySelector('.admin-sidebar').classList.toggle('active');
+        }
+
+        // 8. Client-side booking list filter
+        let filterPicker = null;
+        const filterPickerEl = document.getElementById('bookingListFilterPicker');
+        if (filterPickerEl) {
+            filterPicker = new CustomDateRangePicker('bookingListFilterPicker', {
+                xDaysLimit: 365,
+                onSelect: (start, end) => {
+                    filterBookingsList(start, end);
+                }
+            });
+        }
+
+        function filterBookingsList(filterStart, filterEnd) {
+            const rows = document.querySelectorAll('.booking-row');
+            const fs = new Date(filterStart);
+            const fe = new Date(filterEnd);
+            fs.setHours(0,0,0,0);
+            fe.setHours(0,0,0,0);
+
+            rows.forEach(row => {
+                const rs = new Date(row.dataset.checkIn);
+                const re = new Date(row.dataset.checkOut);
+                rs.setHours(0,0,0,0);
+                re.setHours(0,0,0,0);
+
+                // Overlap condition
+                if (rs < fe && re > fs) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+
+        function clearBookingFilter() {
+            if (filterPicker) {
+                filterPicker.selectedStart = null;
+                filterPicker.selectedEnd = null;
+                filterPicker.renderCalendar();
+                filterPicker.updateInputDisplay();
+            }
+            const rows = document.querySelectorAll('.booking-row');
+            rows.forEach(row => {
+                row.style.display = '';
+            });
         }
     </script>
 

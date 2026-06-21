@@ -29,3 +29,5 @@ Route::post('/admin/booking', [HotelController::class, 'storeBooking'])->name('a
 Route::post('/admin/booking/delete/{id}', [HotelController::class, 'deleteBooking'])->name('admin.booking.delete');
 Route::get('/admin/booking/available-rooms', [HotelController::class, 'getAvailableRoomsForEdit'])->name('admin.booking.available-rooms');
 Route::post('/admin/booking/change-room', [HotelController::class, 'changeBookingRoom'])->name('admin.booking.change-room');
+Route::post('/admin/booking/checkout/{id}', [HotelController::class, 'checkoutBooking'])->name('admin.booking.checkout');
+Route::get('/admin/rooms/availability-grid', [HotelController::class, 'getRoomAvailabilityGrid'])->name('admin.rooms.availability-grid');

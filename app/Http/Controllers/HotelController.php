@@ -216,7 +216,7 @@ class HotelController extends Controller
                   ->from('bookings')
                   ->where(function($inner) use ($check_in, $check_out) {
                       $inner->where('check_in', '<', $check_out)
-                            ->where('check_out', '>', $check_in);
+                            ->where(DB::raw("CASE WHEN status = 'checked_out' THEN actual_checkout ELSE check_out END"), '>', $check_in);
                   });
                 if ($excludeBookingId !== null) {
                     $q->where('id', '!=', $excludeBookingId);
@@ -243,7 +243,7 @@ class HotelController extends Controller
                   ->from('bookings')
                   ->where('id', '!=', $booking->id)
                   ->where('check_in', '<', $booking->check_out)
-                  ->where('check_out', '>', $booking->check_in);
+                  ->where(DB::raw("CASE WHEN status = 'checked_out' THEN actual_checkout ELSE check_out END"), '>', $booking->check_in);
             })
             ->select('rooms.*', 'room_types.name as room_type_name')
             ->orderBy('room_types.name', 'asc')
@@ -281,6 +281,7 @@ class HotelController extends Controller
             'capacity' => (int)$request->input('capacity'),
             'base_price' => $basePrice,
             'amenities' => $request->input('amenities'),
+            'images' => $request->input('images'),
             'created_at' => now(),
             'updated_at' => now()
         ]);
@@ -369,7 +370,7 @@ class HotelController extends Controller
         $overlapping = DB::table('bookings')
             ->where('room_id', $roomId)
             ->where('check_in', '<', $checkOut)
-            ->where('check_out', '>', $checkIn)
+            ->where(DB::raw("CASE WHEN status = 'checked_out' THEN actual_checkout ELSE check_out END"), '>', $checkIn)
             ->first();
 
         if ($overlapping) {
@@ -422,7 +423,7 @@ class HotelController extends Controller
             ->where('room_id', $newRoomId)
             ->where('id', '!=', $bookingId)
             ->where('check_in', '<', $booking->check_out)
-            ->where('check_out', '>', $booking->check_in)
+            ->where(DB::raw("CASE WHEN status = 'checked_out' THEN actual_checkout ELSE check_out END"), '>', $booking->check_in)
             ->first();
 
         if ($overlapping) {
@@ -444,5 +445,79 @@ class HotelController extends Controller
 
         $tab = $booking->booking_type === 'reservation' ? 'dashboard' : 'blockings';
         return redirect()->route('admin', ['tab' => $tab])->with('message', 'Room reassigned successfully.');
+    }
+
+    public function checkoutBooking($id)
+    {
+        $booking = DB::table('bookings')->where('id', $id)->first();
+        if (!$booking) {
+            return redirect()->back()->with('error', 'Booking record not found.');
+        }
+
+        $today = date('Y-m-d');
+
+        DB::table('bookings')->where('id', $id)->update([
+            'status' => 'checked_out',
+            'actual_checkout' => $today,
+            'updated_at' => now()
+        ]);
+
+        return redirect()->back()->with('message', 'Guest checked out successfully. Room is now available.');
+    }
+
+    public function getRoomAvailabilityGrid(Request $request)
+    {
+        $check_in = $request->input('check_in');
+        $check_out = $request->input('check_out');
+
+        if (!$check_in || !$check_out) {
+            return response()->json(['error' => 'Please select check-in and check-out dates.'], 400);
+        }
+
+        $rooms = DB::table('rooms')
+            ->join('room_types', 'rooms.room_type_id', '=', 'room_types.id')
+            ->select('rooms.*', 'room_types.name as room_type_name')
+            ->orderBy('rooms.room_number', 'asc')
+            ->get();
+
+        $result = [];
+
+        foreach ($rooms as $room) {
+            // Find any overlapping bookings/blockings for this room
+            $booking = DB::table('bookings')
+                ->where('room_id', $room->id)
+                ->where('check_in', '<', $check_out)
+                ->where(DB::raw("CASE WHEN status = 'checked_out' THEN actual_checkout ELSE check_out END"), '>', $check_in)
+                ->first();
+
+            if ($booking) {
+                if ($booking->booking_type === 'blocking') {
+                    $result[] = [
+                        'room' => $room,
+                        'status' => 'blocked',
+                        'notes' => $booking->notes,
+                        'check_in' => $booking->check_in,
+                        'check_out' => $booking->check_out
+                    ];
+                } else {
+                    $result[] = [
+                        'room' => $room,
+                        'status' => 'booked',
+                        'guest_name' => $booking->guest_name,
+                        'guest_phone' => $booking->guest_phone,
+                        'booking_status' => $booking->status,
+                        'check_in' => $booking->check_in,
+                        'check_out' => $booking->check_out
+                    ];
+                }
+            } else {
+                $result[] = [
+                    'room' => $room,
+                    'status' => 'available'
+                ];
+            }
+        }
+
+        return response()->json($result);
     }
 }
